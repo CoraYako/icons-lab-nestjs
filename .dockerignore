@@ -1,0 +1,25 @@
+node_modules
+dist
+coverage
+
+# Secretos y configuración local: nunca dentro de la imagen
+
+.env
+.env.*
+!.env.example
+
+# Control de versiones, editor y Docker
+
+.git
+.gitignore
+.vscode
+.idea
+Dockerfile
+docker-compose*.yml
+compose*.yml
+.dockerignore
+
+# Varios
+
+*.log
+README.md

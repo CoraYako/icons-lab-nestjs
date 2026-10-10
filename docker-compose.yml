@@ -1,0 +1,86 @@
+# =============================================================================
+# icons-lab · Entorno de DESARROLLO local
+#
+#   Levantar con recarga en caliente:   docker compose up --build --watch
+#   Detener:                            Ctrl+C   (o: docker compose down)
+#   Borrar también la base de datos:    docker compose down -v
+#
+# ⚠ Credenciales de ejemplo, solo para uso local. No usar en producción.
+# =============================================================================
+name: icons-lab
+
+services:
+  # ---------------------------------------------------------------------------
+  # PostgreSQL 16
+  # ---------------------------------------------------------------------------
+  db:
+    image: postgres:16-alpine
+    container_name: icons-lab-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: icons
+      POSTGRES_PASSWORD: icons
+      POSTGRES_DB: icons_lab
+      TZ: America/Argentina/Buenos_Aires
+    ports:
+      # Expuesto al host para conectarte con DBeaver / pgAdmin / VS Code
+      # o para correr la API fuera de Docker (DB_HOST=localhost).
+      # Si ya tenés un Postgres local usando el 5432, cambiá a "5433:5432".
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - icons-net
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U icons -d icons_lab']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ---------------------------------------------------------------------------
+  # API NestJS (etapa "development" del Dockerfile)
+  # ---------------------------------------------------------------------------
+  backend:
+    build:
+      context: .
+      target: development
+    container_name: icons-lab-backend
+    # Aplica migraciones pendientes y arranca en modo watch
+    command: sh -c "pnpm migration:run && pnpm start:dev"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      # "db" es el nombre del servicio: la red de Docker lo resuelve como host
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: icons
+      DB_PASSWORD: icons
+      DB_NAME: icons_lab
+      JWT_SECRET: dev-only-secret-change-me
+      JWT_EXPIRES_IN: 1h
+    ports:
+      - '3000:3000'
+    depends_on:
+      db:
+        condition: service_healthy # espera a que Postgres acepte conexiones
+    networks:
+      - icons-net
+    # Recarga en caliente: "docker compose up --watch" copia cada cambio de
+    # src/ al contenedor y Nest recompila. Si cambian las dependencias,
+    # reconstruye la imagen.
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+        - action: rebuild
+          path: package.json
+        - action: rebuild
+          path: pnpm-lock.yaml
+
+networks:
+  icons-net:
+    driver: bridge
+
+volumes:
+  pgdata:
