@@ -28,7 +28,7 @@ export class User {
   @Column({
     name: 'password_hash',
     type: 'varchar',
-    length: 254,
+    length: 255,
     select: false,
   })
   passwordHash!: string;
@@ -42,7 +42,7 @@ export class User {
   role!: UserRole;
 
   @Column({ type: 'boolean', default: true })
-  enabled: boolean;
+  enabled!: boolean;
 
   @CreateDateColumn({ name: 'created_at', type: 'timestamptz' })
   createdAt!: Date;
