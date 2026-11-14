@@ -142,3 +142,9 @@ Para conectarte a la base con un cliente como DBeaver, pgAdmin o la extensión d
 - **El puerto `3000` ya está en uso:** cambiá el mapeo del servicio `backend` de `'3000:3000'` a, por ejemplo, `'3001:3000'`, y usá ese puerto en la URL.
 - **`unknown flag: --watch`:** tu versión de Docker Compose es anterior a la 2.22. Actualizala, o levantá el proyecto con `docker compose up --build` (sin recarga en caliente: vas a tener que volver a construir para ver tus cambios).
 - **Windows: `error during connect` o `cannot find the file specified`:** Docker Desktop no está abierto. Inicialo y esperá a que indique que está en ejecución.
+
+---
+
+## Licencia
+
+Este proyecto se distribuye bajo la licencia **MIT**. Ver el archivo [LICENSE](./LICENSE) para más detalles.
