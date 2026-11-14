@@ -5,7 +5,7 @@ reglas. La implementación se ajusta a él, no al revés.
 
 - **Versión:** v1
 - **Base URL local:** `http://localhost:8080/api/v1`
-- **Base URL staging:** `[a definir]`
+- **Base URL staging:** `[por definir]`
 - **Especificación viva:** `http://localhost:8080/api/docs-json` · UI: `http://localhost:8080/api/docs`
 
 > Este archivo es el **acuerdo**; el OpenAPI generado desde el código es la **implementación**. Cuando difieran, el
@@ -15,9 +15,9 @@ reglas. La implementación se ajusta a él, no al revés.
 
 ## Cómo cambiar este contrato
 
-1. Modifica **primero** este archivo, en un cambio que no toque código.
-2. Actualiza la tabla de **Estado de implementación** si el cambio agrega o quita endpoints.
-3. Recién entonces implementa.
+1. Modificá **primero** este archivo, en un cambio que no toque código.
+2. Actualizá la tabla de **Estado de implementación** si el cambio agrega o quita endpoints.
+3. Recién entonces implementá.
 
 **Cambios que rompen (necesitan versión nueva o aviso explícito):** quitar un campo, renombrarlo, cambiar su tipo,
 volver obligatorio un campo opcional, cambiar un código de estado. **Cambios que no rompen:** agregar un campo opcional
@@ -104,22 +104,27 @@ llevan cuerpo.
 Continentes, países e íconos se crean **sin imagen**. La imagen se carga después con `PUT /{recurso}/{id}/image`, en un
 solo paso:
 
-- `multipart/form-data`, campo `file`. JPEG, PNG o WebP; máximo 5 MB.
+- `multipart/form-data`, campo `file`. JPEG, PNG o WebP; máximo 5 MB. El tipo se determina por el **contenido** del
+  archivo, no por el tipo que declara el cliente.
 - En esa misma petición el servidor valida el archivo, lo sube al bucket, lo asocia al recurso y responde `200` con el
   recurso completo, ya con su `imageURL`.
+- Si el archivo es **idéntico** a la imagen actual del recurso (los mismos bytes), no se modifica nada: responde `200`
+  con el recurso sin cambios y la misma `imageURL`. Repetir la misma petición es seguro: el `PUT` es idempotente.
 - Una imagen asignada se puede **reemplazar** con otro `PUT`, pero **no eliminar**: no existe
   `DELETE /{recurso}/{id}/image`. Un recurso tiene `imageURL: null` solo mientras no se le cargó ninguna.
 - `imageURL` es una URL pública, sin firma ni vencimiento. El cliente la usa tal cual y no debe armarla ni
   interpretarla.
-- Cada imagen nueva tiene una URL distinta de la anterior, así que los navegadores y la CDN nunca muestran una versión
-  vieja en caché.
+- Cada imagen distinta tiene una URL distinta, así que los navegadores y la CDN nunca muestran una versión vieja en
+  caché.
 
-**Errores:** `400` falta el campo `file` · `413` el archivo supera 5 MB · `415` el tipo no es JPEG, PNG ni WebP.
+**Errores:** `400` falta el campo `file` · `413` el archivo supera 5 MB · `415` el contenido no es JPEG, PNG ni WebP.
 
 > **Implementación.** La base guarda solo la **clave** del objeto (`image_key`), nunca la URL. La clave la genera el
-> servidor con el formato `{recurso}/{id}/{versión}.{extensión}`, donde la versión es un valor aleatorio nuevo en cada
-> subida (por ejemplo, `continents/3f2b8c1e-…/7c1e9a.webp`). `imageURL` se arma al responder: URL pública base (variable
-> de entorno) + clave. Al reemplazar, primero se guarda la clave nueva y después se borra del bucket el archivo anterior.
+> servidor con el formato `{recurso}/{id}/{versión}.{extensión}`, donde la versión son los primeros 16 caracteres
+> hexadecimales del **hash SHA-256 del contenido** del archivo (por ejemplo,
+> `continents/3f2b8c1e-…/7c1e9a3f0b2d4e6a.webp`). El mismo archivo da siempre la misma clave; si coincide con la actual,
+> no se sube ni se guarda nada. `imageURL` se arma al responder: URL pública base (variable de entorno) + clave. Al
+> reemplazar, primero se guarda la clave nueva y después se borra del bucket el archivo anterior.
 
 ### Formato de error (RFC 9457, uniforme en toda la API)
 
@@ -164,7 +169,7 @@ solo paso:
 | `/problems/unsupported-media`   | `415`    | La imagen no es de un tipo admitido                           |
 | `/problems/internal-error`      | `500`    | Error no controlado                                           |
 
-### Códigos de estado usados
+### Códigos de estado que usamos
 
 `200` OK · `201` Creado · `204` Sin contenido · `400` Entrada inválida · `401` Sin autenticar · `403` Sin permiso ·`404`
 No existe · `409` Conflicto · `413` Archivo demasiado grande · `415` Tipo de archivo no admitido · `500` Error del
@@ -269,7 +274,7 @@ Todos los continentes, **sin paginación**, ordenados por nombre. Sin continente
 [
   {
     "id": "3f2b8c1e-9d4a-4c6b-8f0e-2a7d5b1c9e44",
-    "imageURL": "https://cdn.icons-lab.example/continents/3f2b8c1e-9d4a-4c6b-8f0e-2a7d5b1c9e44/7c1e9a.webp",
+    "imageURL": "https://cdn.icons-lab.example/continents/3f2b8c1e-9d4a-4c6b-8f0e-2a7d5b1c9e44/7c1e9a3f0b2d4e6a.webp",
     "name": "América"
   },
   {
@@ -289,7 +294,7 @@ Representación detallada.
 ```json
 {
   "id": "3f2b8c1e-9d4a-4c6b-8f0e-2a7d5b1c9e44",
-  "imageURL": "https://cdn.icons-lab.example/continents/3f2b8c1e-9d4a-4c6b-8f0e-2a7d5b1c9e44/7c1e9a.webp",
+  "imageURL": "https://cdn.icons-lab.example/continents/3f2b8c1e-9d4a-4c6b-8f0e-2a7d5b1c9e44/7c1e9a3f0b2d4e6a.webp",
   "name": "América",
   "countries": [
     "Argentina",
@@ -343,7 +348,7 @@ existe otro continente con ese nombre.
 
 ### `PUT /continents/{id}/image` 🔒 ADMIN
 
-Sube o reemplaza la imagen (ver [Imágenes](#imágenes)).
+Sube o reemplaza la imagen (ver [Imágenes](#imágenes)). Si el archivo es idéntico al actual, no se modifica nada.
 
 **Request** — `multipart/form-data`, campo `file`.
 
@@ -352,7 +357,7 @@ Sube o reemplaza la imagen (ver [Imágenes](#imágenes)).
 ```json
 {
   "id": "3f2b8c1e-9d4a-4c6b-8f0e-2a7d5b1c9e44",
-  "imageURL": "https://cdn.icons-lab.example/continents/3f2b8c1e-9d4a-4c6b-8f0e-2a7d5b1c9e44/7c1e9a.webp",
+  "imageURL": "https://cdn.icons-lab.example/continents/3f2b8c1e-9d4a-4c6b-8f0e-2a7d5b1c9e44/7c1e9a3f0b2d4e6a.webp",
   "name": "América",
   "countries": [
     "Argentina",
@@ -393,7 +398,7 @@ Ejemplo: `GET /countries?size=20&sort=population,desc&continentId=3f2b8c1e-9d4a-
   "content": [
     {
       "id": "8a1d2f3c-4b5e-4f60-9a7b-8c9d0e1f2a3b",
-      "imageURL": "https://cdn.icons-lab.example/countries/8a1d2f3c-4b5e-4f60-9a7b-8c9d0e1f2a3b/4d2b8f.webp",
+      "imageURL": "https://cdn.icons-lab.example/countries/8a1d2f3c-4b5e-4f60-9a7b-8c9d0e1f2a3b/4d2b8f1a6c3e9d07.webp",
       "name": "Argentina",
       "population": 46000000,
       "area": 2780400.0,
@@ -483,7 +488,7 @@ Los íconos asociados no se borran.
 
 ### `PUT /countries/{id}/image` 🔒 ADMIN
 
-Sube o reemplaza la imagen (ver [Imágenes](#imágenes)).
+Sube o reemplaza la imagen (ver [Imágenes](#imágenes)). Si el archivo es idéntico al actual, no se modifica nada.
 
 **Request** — `multipart/form-data`, campo `file`. **Response `200`** — el país completo, con su `imageURL`.
 **Errores:** `400` falta el campo `file` · `413` supera 5 MB · `415` tipo no admitido.
@@ -519,7 +524,7 @@ Ejemplo:
   "content": [
     {
       "id": "b7c8d9e0-1f2a-4b3c-8d4e-5f6a7b8c9d0e",
-      "imageURL": "https://cdn.icons-lab.example/icons/b7c8d9e0-1f2a-4b3c-8d4e-5f6a7b8c9d0e/9e3a1c.webp",
+      "imageURL": "https://cdn.icons-lab.example/icons/b7c8d9e0-1f2a-4b3c-8d4e-5f6a7b8c9d0e/9e3a1c5b7d2f4a86.webp",
       "name": "Cataratas del Iguazú",
       "creationDate": "1934-10-09",
       "height": 82,
@@ -621,7 +626,7 @@ Borrado lógico: el ícono deja de aparecer en listados, en consultas y en el ca
 
 ### `PUT /icons/{id}/image` 🔒 ADMIN
 
-Sube o reemplaza la imagen (ver [Imágenes](#imágenes)).
+Sube o reemplaza la imagen (ver [Imágenes](#imágenes)). Si el archivo es idéntico al actual, no se modifica nada.
 
 **Request** — `multipart/form-data`, campo `file`. **Response `200`** — el ícono completo, con su `imageURL`.
 **Errores:** `400` falta el campo `file` · `413` supera 5 MB · `415` tipo no admitido.
@@ -661,7 +666,7 @@ Verifica que la API responde y que llega a la base de datos.
 }
 ```
 
-**Response `503`** — la API responde, pero no llega a la base de datos.
+**Response `503`** — la API responde pero no llega a la base de datos.
 
 ```json
 {
