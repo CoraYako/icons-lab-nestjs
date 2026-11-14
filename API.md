@@ -695,9 +695,9 @@ Verifica que la API responde y que llega a la base de datos.
 | Endpoint                                                               | Estado |
 |------------------------------------------------------------------------|--------|
 | `POST /auth/register` · `POST /auth/login`                             | ☐     |
-| `GET /continents` · `GET /continents/{id}`                             | ☐     |
-| `POST /continents` · `PATCH /continents/{id}`                          | ☐     |
-| `PUT /continents/{id}/image`                                           | ☐     |
+| `GET /continents` · `GET /continents/{id}`                             | ✅     |
+| `POST /continents` · `PATCH /continents/{id}`                          | ✅     |
+| `PUT /continents/{id}/image`                                           | ✅     |
 | `GET /countries` · `GET /countries/{id}`                               | ☐     |
 | `POST /countries` · `PATCH /countries/{id}` · `DELETE /countries/{id}` | ☐     |
 | `PUT /countries/{id}/image`                                            | ☐     |
