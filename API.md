@@ -4,9 +4,9 @@
 reglas. La implementación se ajusta a él, no al revés.
 
 - **Versión:** v1
-- **Base URL local:** `http://localhost:8080/api/v1`
+- **Base URL local:** `http://localhost:3000/api/v1`
 - **Base URL staging:** `[por definir]`
-- **Especificación viva:** `http://localhost:8080/api/docs-json` · UI: `http://localhost:8080/api/docs`
+- **Especificación viva:** `http://localhost:3000/api/docs-json` · UI: `http://localhost:3000/api/docs`
 
 > Este archivo es el **acuerdo**; el OpenAPI generado desde el código es la **implementación**. Cuando difieran, el
 > código está mal o este documento no se actualizó: ambas cosas son un bug.

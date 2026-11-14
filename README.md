@@ -1,124 +1,144 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# icons-lab · API (NestJS)
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST de **icons-lab**, un catálogo de **continentes**, **países** e **íconos** (monumentos y lugares emblemáticos, como el Obelisco o las Cataratas del Iguazú). Permite consultar, crear, modificar y borrar esos recursos, cargarles imágenes y controlar el acceso con usuarios y roles (`ADMIN` y `VIEWER`).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+Este proyecto es la migración a **NestJS** de una API sencilla hecha originalmente en **Spring Boot**.
 
-## Description
+> [!IMPORTANT]
+> Este repositorio contiene **solo el backend**. No incluye ningún frontend: la API se consume desde un cliente HTTP (Postman, Insomnia, `curl`, etc.) o desde una aplicación cliente que vive en otro repositorio.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## Tecnologías
 
-```bash
-$ pnpm install
-```
+| Área | Tecnología |
+|---|---|
+| Lenguaje y entorno | [TypeScript](https://www.typescriptlang.org/) 6 · [Node.js](https://nodejs.org/) 24 |
+| Framework | [NestJS](https://nestjs.com/) 12 (sobre Express) |
+| Base de datos | [PostgreSQL](https://www.postgresql.org/) 16 |
+| ORM y migraciones | [TypeORM](https://typeorm.io/) |
+| Validación de datos | `class-validator` · `class-transformer` |
+| Documentación OpenAPI | `@nestjs/swagger` |
+| Seguridad | `bcrypt` (hash de contraseñas) |
+| Gestor de paquetes | [pnpm](https://pnpm.io/) |
+| Tests | [Vitest](https://vitest.dev/) · Supertest |
+| Calidad de código | [oxlint](https://oxc.rs/) · Prettier |
+| Contenedores | [Docker](https://www.docker.com/) · Docker Compose |
 
-## Compile and run the project
+---
 
-```bash
-# development
-$ pnpm run start
+## Contrato de la API
 
-# watch mode
-$ pnpm run start:dev
+Todos los endpoints, sus datos de entrada y salida, las reglas de validación, los códigos de estado y el formato de errores están definidos en **[API.md](./API.md)**.
 
-# production mode
-$ pnpm run start:prod
-```
+Ese documento es el **contrato** de la API: la implementación se ajusta a él, no al revés. Cualquier cambio en los endpoints se hace primero en `API.md` y recién después en el código. Ahí también está la tabla con el **estado de implementación** de cada endpoint.
 
-## Run tests
+---
 
-```bash
-# unit tests
-$ pnpm run test
+## Cómo levantar el proyecto con Docker
 
-# e2e tests
-$ pnpm run test:e2e
+El entorno local se levanta con Docker Compose, que arranca dos contenedores:
 
-# test coverage
-$ pnpm run test:cov
-```
+| Servicio | Contenedor | Puerto en tu máquina | Qué es |
+|---|---|---|---|
+| `db` | `icons-lab-db` | `5432` | PostgreSQL 16 |
+| `backend` | `icons-lab-backend` | `3000` | La API NestJS, con recarga en caliente |
 
-## Deployment
+Al arrancar, el backend **aplica automáticamente las migraciones pendientes** de la base de datos y queda en modo *watch*: cada cambio que hagas en `src/` se copia al contenedor y Nest recompila solo.
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+### Requisitos previos
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+> [!WARNING]
+> **Es necesario tener Docker instalado en tu máquina** y en ejecución. Sin Docker, estos pasos no funcionan.
+>
+> - **Linux:** [Docker Engine](https://docs.docker.com/engine/install/) con el plugin [Docker Compose](https://docs.docker.com/compose/install/linux/).
+> - **Windows:** [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/) (se recomienda con el backend de WSL 2). Docker Desktop tiene que estar **abierto** antes de correr los comandos.
+>
+> La opción `--watch` requiere **Docker Compose 2.22 o superior**. Podés ver tu versión con `docker compose version`.
+
+No hace falta instalar Node.js, pnpm ni PostgreSQL en tu máquina: todo corre dentro de los contenedores.
+
+Para verificar que Docker está instalado y funcionando:
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+docker --version
+docker compose version
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Observability
-
-In production applications, observability is essential for understanding how your system behaves, detecting issues early, and maintaining reliable performance.
-
-[NestJS Observe](https://observe.nestjs.com) automatically instruments your NestJS application, giving you deep visibility into your system with minimal setup:
-
-- **Distributed tracing:** Follow requests across services and understand how they flow through your system.
-- **Waterfall analysis:** Visualize request execution and identify slow operations, bottlenecks, and unexpected delays.
-- **Performance analysis:** Analyze application performance in real time and quickly pinpoint areas that need optimization.
-- **Metrics:** Track key application and infrastructure metrics to understand system health and performance trends.
-- **Logging:** Centralize and correlate logs with traces and other telemetry to make debugging easier.
-- **Error tracking:** Detect errors quickly and investigate their root causes with the surrounding context.
-- **SLA monitoring:** Track service-level objectives and identify when your application is approaching or exceeding defined thresholds.
-- **Alarms and alerts:** Set up alerts for critical errors, performance degradation, SLA violations, and other anomalies so your team can react quickly.
-
-To add it to this project:
+### Linux (bash)
 
 ```bash
-$ pnpm install @nestjs/observe
+# 1. Clonar el repositorio
+git clone https://github.com/CoraYako/icons-lab-nestjs.git
+cd icons-lab-nestjs
+
+# 2. Construir las imágenes y levantar los servicios con recarga en caliente
+docker compose up --build --watch
 ```
 
-Then follow the [setup guide](https://docs.nestjs.com/observability/overview) - it takes a single import and an app key.
+> Si tu usuario no pertenece al grupo `docker`, anteponé `sudo` a los comandos de Docker, o seguí los [pasos posteriores a la instalación](https://docs.docker.com/engine/install/linux-postinstall/) para usar Docker sin `sudo`.
 
-The free plan needs no payment details and covers 300,000 events a month. You can also browse the [live demo](https://www.observe-demo.nestjs.com/dashboard) first - the whole dashboard over a busy service's data, with nothing to install.
+### Windows (PowerShell)
 
-## Resources
+```powershell
+# 1. Clonar el repositorio
+git clone https://github.com/CoraYako/icons-lab-nestjs.git
+Set-Location icons-lab-nestjs
 
-Check out a few resources that may come in handy when working with NestJS:
+# 2. Construir las imágenes y levantar los servicios con recarga en caliente
+docker compose up --build --watch
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Auto-instrument your application with [NestJS Observe](https://observe.nestjs.com). Distributed tracing, metrics, and logging made easy. Error tracking and performance monitoring for your NestJS applications.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+### Verificar que la API está corriendo
 
-## Support
+Cuando en la consola aparezca que Nest terminó de iniciar, la API responde en:
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```
+http://localhost:3000/api/v1
+```
 
-## Stay in touch
+Para ver los logs solo del backend (desde otra terminal):
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+docker compose logs -f backend
+```
 
-## License
+### Comandos útiles
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Son los mismos en Linux y en PowerShell:
+
+| Acción | Comando |
+|---|---|
+| Levantar con recarga en caliente | `docker compose up --build --watch` |
+| Levantar en segundo plano (sin recarga en caliente) | `docker compose up --build -d` |
+| Ver logs del backend | `docker compose logs -f backend` |
+| Detener los servicios | `Ctrl + C` o `docker compose down` |
+| Detener y **borrar la base de datos** | `docker compose down -v` |
+| Ejecutar los tests dentro del contenedor | `docker compose exec backend pnpm test` |
+
+> [!CAUTION]
+> `docker compose down -v` elimina el volumen `pgdata`, es decir, **todos los datos** de la base local. La próxima vez que levantes el proyecto, las migraciones vuelven a crear las tablas vacías.
+
+### Configuración y credenciales locales
+
+Las variables de entorno del entorno local ya están definidas en [`docker-compose.yml`](./docker-compose.yml), así que no hace falta crear un archivo `.env` para levantar el proyecto con Docker.
+
+| Variable | Valor local |
+|---|---|
+| `DB_HOST` | `db` (nombre del servicio dentro de la red de Docker) |
+| `DB_PORT` | `5432` |
+| `DB_USER` / `DB_PASSWORD` | `icons` / `icons` |
+| `DB_NAME` | `icons_lab` |
+| `PORT` | `3000` |
+
+> [!NOTE]
+> Son **credenciales de ejemplo, solo para uso local**. No las uses en ningún otro entorno.
+
+Para conectarte a la base con un cliente como DBeaver, pgAdmin o la extensión de VS Code, usá `localhost:5432` con el usuario, contraseña y base de la tabla anterior.
+
+### Problemas frecuentes
+
+- **El puerto `5432` ya está en uso:** probablemente tengas un PostgreSQL instalado en tu máquina. En `docker-compose.yml`, cambiá el mapeo del servicio `db` de `'5432:5432'` a `'5433:5432'` y conectate desde tu cliente por el puerto `5433`.
+- **El puerto `3000` ya está en uso:** cambiá el mapeo del servicio `backend` de `'3000:3000'` a, por ejemplo, `'3001:3000'`, y usá ese puerto en la URL.
+- **`unknown flag: --watch`:** tu versión de Docker Compose es anterior a la 2.22. Actualizala, o levantá el proyecto con `docker compose up --build` (sin recarga en caliente: vas a tener que volver a construir para ver tus cambios).
+- **Windows: `error during connect` o `cannot find the file specified`:** Docker Desktop no está abierto. Inicialo y esperá a que indique que está en ejecución.
